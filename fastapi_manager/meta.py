@@ -1,7 +1,7 @@
 from .decorators import catch_sqlalchemy_error
 
 
-class BaseManagerMeta(type):
+class ManagerMeta(type):
     """
     Metaclass that applies the catch_sqlalchemy_error decorator to all methods
     """
@@ -23,6 +23,6 @@ class BaseManagerMeta(type):
             if isinstance(attr_value, classmethod):
                 attrs[attr_name] = classmethod(catch_sqlalchemy_error(attr_value.__func__))
 
-        return super(BaseManagerMeta, cls).__new__(cls, name, bases, attrs)
+        return super(ManagerMeta, cls).__new__(cls, name, bases, attrs)
 
 

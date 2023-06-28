@@ -1,4 +1,4 @@
-from typing import Generic, Sequence, Type, TypeVar
+from typing import Generic, Type, TypeVar
 
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -6,24 +6,33 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
-from .meta import BaseManagerMeta
+from .meta import ManagerMeta
+from .pagination import Pagination, Paginator
 
 T = TypeVar('T')
 
 
-class BaseManager(Generic[T], metaclass=BaseManagerMeta):
+class Manager(Generic[T], metaclass=ManagerMeta):
     model: Type[T]
+    paginator_class = Paginator
 
     class Params(BaseModel):
+        """ A reserved pydantic model to use in filter_by expression """
         pass
 
     @classmethod
-    def add(cls, session: Session, instance: T):
+    def create(cls, session: Session, instance: T):
+        if isinstance(instance, BaseModel):
+            instance = cls.model(**instance.dict())
+
         session.add(instance)
         session.commit()
 
     @classmethod
-    async def async_add(cls, session: AsyncSession, instance: T):
+    async def async_create(cls, session: AsyncSession, instance: T):
+        if isinstance(instance, BaseModel):
+            instance = cls.model(**instance.dict())
+
         session.add(instance)
         await session.commit()
 
@@ -49,18 +58,38 @@ class BaseManager(Generic[T], metaclass=BaseManagerMeta):
             return None
 
     @classmethod
-    def search(cls, session: Session, params: Params) -> Sequence[T]:
-        statement = select(cls.model).filter_by(**params.dict(exclude_none=True))
+    def get_or_create(cls, session: Session, **kwargs) -> T:
+        instance = cls.get(session, **kwargs)
 
-        items = session.execute(statement)
-        return items.scalars().all()
+        if not instance:
+            instance = cls.model(**kwargs)
+            cls.create(session, instance)
+
+        return instance
 
     @classmethod
-    async def async_search(cls, session: AsyncSession, params: Params) -> Sequence[T]:
+    async def async_get_or_create(cls, session: AsyncSession, **kwargs) -> T:
+        instance = await cls.async_get(session, **kwargs)
+
+        if not instance:
+            instance = cls.model(**kwargs)
+            await cls.async_create(session, instance)
+
+        return instance
+
+    @classmethod
+    def search(cls, session: Session, params: Params, page: int = 1) -> Pagination:
         statement = select(cls.model).filter_by(**params.dict(exclude_none=True))
 
-        items = await session.execute(statement)
-        return items.scalars().all()
+        return cls.paginator_class(session, statement, page).paginate()
+
+    @classmethod
+    async def async_search(cls, session: AsyncSession, params: Params, page: int = 1) -> Pagination:
+        statement = select(cls.model).filter_by(**params.dict(exclude_none=True))
+
+        pagination = await cls.paginator_class(session, statement, page).async_paginate()
+
+        return pagination
 
     @classmethod
     def update(cls, session: Session, instance: T, **kwargs):
