@@ -1,4 +1,4 @@
-from typing import Generic, Type, TypeVar
+from typing import Generic, Sequence, Type, TypeVar
 
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -6,12 +6,12 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
-from .meta import SQLAlchemyErrorHandlerMeta
+from .meta import BaseManagerMeta
 
 T = TypeVar('T')
 
 
-class BaseManager(Generic[T], metaclass=SQLAlchemyErrorHandlerMeta):
+class BaseManager(Generic[T], metaclass=BaseManagerMeta):
     model: Type[T]
 
     class Params(BaseModel):
@@ -49,14 +49,14 @@ class BaseManager(Generic[T], metaclass=SQLAlchemyErrorHandlerMeta):
             return None
 
     @classmethod
-    def search(cls, session: Session, params: Params) -> [T]:
+    def search(cls, session: Session, params: Params) -> Sequence[T]:
         statement = select(cls.model).filter_by(**params.dict(exclude_none=True))
 
         items = session.execute(statement)
         return items.scalars().all()
 
     @classmethod
-    async def async_search(cls, session: AsyncSession, params: Params) -> [T]:
+    async def async_search(cls, session: AsyncSession, params: Params) -> Sequence[T]:
         statement = select(cls.model).filter_by(**params.dict(exclude_none=True))
 
         items = await session.execute(statement)
