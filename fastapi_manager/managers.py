@@ -81,13 +81,13 @@ class Manager(Generic[T], metaclass=ManagerMeta):
     def search(cls, session: Session, params: Params, page: int = 1) -> Pagination:
         statement = select(cls.model).filter_by(**params.dict(exclude_none=True))
 
-        return cls.paginator_class(session, statement, page).paginate()
+        return cls.paginator_class(cls.model, session, statement, page).paginate()
 
     @classmethod
     async def async_search(cls, session: AsyncSession, params: Params, page: int = 1) -> Pagination:
         statement = select(cls.model).filter_by(**params.dict(exclude_none=True))
 
-        pagination = await cls.paginator_class(session, statement, page).async_paginate()
+        pagination = await cls.paginator_class(cls.model, session, statement, page).async_paginate()
 
         return pagination
 

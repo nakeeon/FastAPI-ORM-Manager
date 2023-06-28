@@ -1,4 +1,4 @@
-from typing import Sequence, Union
+from typing import List, Sequence, Union
 
 from pydantic import BaseModel
 from sqlalchemy import func, Select
@@ -8,16 +8,18 @@ from sqlalchemy.orm import Session
 
 class Pagination(BaseModel):
     page: int
-    results: Sequence
+    results: Union[Sequence[any], List[any]]
     total: int
     has_prev: bool
     has_next: bool
 
 
 class Paginator:
-    per_page = 25
+    per_page: int = 25
+    order_by: str = 'id'
 
-    def __init__(self, session: Union[Session, AsyncSession], statement: Select, page: int = 1):
+    def __init__(self, model, session: Union[Session, AsyncSession], statement: Select, page: int = 1):
+        self.model = model
         self.session = session
         self.statement = statement
         self.page = page
@@ -30,17 +32,19 @@ class Paginator:
         return items.scalars().all()
 
     async def async_get_results(self) -> Sequence[any]:
-        statement = self.statement.limit(self.per_page).offset((self.page - 1) * self.per_page)
+        statement = self.statement.limit(self.per_page).offset((self.page - 1) * self.per_page).order_by(self.order_by)
 
         items = await self.session.execute(statement)
 
         return items.scalars().all()
 
     def get_total(self) -> int:
-        return self.session.execute(self.statement.with_only_columns(func.count())).scalar()
+        return self.session.execute(
+            self.statement.with_only_columns(func.count(getattr(self.model, self.order_by)))).scalar()
 
     async def async_get_total(self) -> int:
-        total = await self.session.execute(self.statement.with_only_columns(func.count()))
+        total = await self.session.execute(
+            self.statement.with_only_columns(func.count(getattr(self.model, self.order_by))))
 
         return total.scalar()
 
