@@ -37,10 +37,10 @@ class Paginator:
         return items.scalars().all()
 
     def get_total(self) -> int:
-        return self.session.execute(self.statement.with_entities(func.count())).scalar()
+        return self.session.execute(self.statement.with_only_columns(func.count())).scalar()
 
     async def async_get_total(self) -> int:
-        total = await self.session.execute(self.statement.with_entities(func.count()))
+        total = await self.session.execute(self.statement.with_only_columns(func.count()))
 
         return total.scalar()
 
