@@ -44,35 +44,31 @@ class Paginator:
 
         return total.scalar()
 
-    def has_next(self) -> bool:
-        return (self.page * self.per_page) < self.get_total()
-
-    async def async_has_next(self) -> bool:
-        total = await self.async_get_total()
-
+    def has_next(self, total: int) -> bool:
         return (self.page * self.per_page) < total
 
     def has_prev(self) -> bool:
         return self.page > 1
 
     def paginate(self) -> Pagination:
+        total = self.get_total()
+
         return Pagination(
             page=self.page,
             results=self.get_results(),
             total=self.get_total(),
             has_prev=self.has_prev(),
-            has_next=self.has_next(),
+            has_next=self.has_next(total),
         )
 
     async def async_paginate(self) -> Pagination:
         results = await self.async_get_results()
         total = await self.async_get_total()
-        has_next = await self.async_has_next()
 
         return Pagination(
             page=self.page,
             results=results,
             total=total,
-            has_prev=has_next,
-            has_next=self.has_next(),
+            has_prev=self.has_prev(),
+            has_next=self.has_next(total),
         )
