@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 class Pagination(BaseModel):
     page: int
-    results: Union[Sequence[any], List[any]]
+    results: Union[Sequence, List]
     total: int
     has_prev: bool
     has_next: bool
