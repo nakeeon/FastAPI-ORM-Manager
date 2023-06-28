@@ -1,4 +1,4 @@
-from typing import Type, TypeVar
+from typing import Generic, Type, TypeVar
 
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -11,7 +11,7 @@ from .meta import SQLAlchemyErrorHandlerMeta
 T = TypeVar('T')
 
 
-class BaseManager(metaclass=SQLAlchemyErrorHandlerMeta):
+class BaseManager(Generic[T], metaclass=SQLAlchemyErrorHandlerMeta):
     model: Type[T]
 
     class Params(BaseModel):
