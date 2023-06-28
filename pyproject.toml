@@ -4,9 +4,9 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fastapi-orm-manager"
-version = "0.0.4"
+version = "0.0.5"
 authors = [
-  { name="Nazar Kaliuzhnyi", email="kaluzghnyy@gmail.com" },
+    { name = "Nazar Kaliuzhnyi", email = "kaluzghnyy@gmail.com" },
 ]
 description = "A base manager class to handle CRUD on SQLAlchemy models. Suitable to use in FastAPI projects."
 readme = "README.md"
@@ -17,8 +17,8 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-  "sqlalchemy >= 1.4",
-  "pydantic >= 1.10.9",
+    "sqlalchemy >= 1.4",
+    "pydantic >= 1.10.9",
 ]
 
 [project.urls]
