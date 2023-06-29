@@ -21,23 +21,31 @@ class Manager(Generic[T], metaclass=ManagerMeta):
         ...
 
     @classmethod
-    def create(cls, session: Session, instance: T):
+    def create(cls, session: Session, instance: T, commit: bool = True) -> T:
         if isinstance(instance, BaseModel):
             instance = cls.model(**instance.dict())
 
         session.add(instance)
-        session.commit()
+
+        if commit:
+            session.commit()
+
+        return instance
 
     @classmethod
-    async def async_create(cls, session: AsyncSession, instance: T):
+    async def async_create(cls, session: AsyncSession, instance: T, commit: bool = True) -> T:
         if isinstance(instance, BaseModel):
             instance = cls.model(**instance.dict())
 
         session.add(instance)
-        await session.commit()
+
+        if commit:
+            await session.commit()
+
+        return instance
 
     @classmethod
-    def get(cls, session: Session, **kwargs) -> T:
+    def get(cls, session: Session, **kwargs) -> Union[T, None]:
         statement = select(cls.model).filter_by(**kwargs)
 
         item = session.execute(statement)
@@ -48,7 +56,7 @@ class Manager(Generic[T], metaclass=ManagerMeta):
             return None
 
     @classmethod
-    async def async_get(cls, session: AsyncSession, **kwargs) -> T:
+    async def async_get(cls, session: AsyncSession, **kwargs) -> Union[T, None]:
         statement = select(cls.model).filter_by(**kwargs)
         item = await session.execute(statement)
 
@@ -58,12 +66,12 @@ class Manager(Generic[T], metaclass=ManagerMeta):
             return None
 
     @classmethod
-    def get_or_create(cls, session: Session, **kwargs) -> T:
+    def get_or_create(cls, session: Session, commit: bool = True, **kwargs) -> T:
         instance = cls.get(session, **kwargs)
 
         if not instance:
             instance = cls.model(**kwargs)
-            cls.create(session, instance)
+            cls.create(session, instance, commit)
 
         return instance
 
