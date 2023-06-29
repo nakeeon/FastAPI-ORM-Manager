@@ -66,7 +66,8 @@ class Manager(Generic[T], metaclass=ManagerMeta):
             return None
 
     @classmethod
-    def get_or_create(cls, session: Session, commit: bool = True, **kwargs) -> Tuple[T, bool]:
+    def get_or_create(cls, session: Session, **kwargs) -> Tuple[T, bool]:
+        commit = kwargs.get('commit', True)
         created = False
         instance = cls.get(session, **kwargs)
 
@@ -79,12 +80,13 @@ class Manager(Generic[T], metaclass=ManagerMeta):
 
     @classmethod
     async def async_get_or_create(cls, session: AsyncSession, **kwargs) -> Tuple[T, bool]:
+        commit = kwargs.get('commit', True)
         created = False
         instance = await cls.async_get(session, **kwargs)
 
         if not instance:
             instance = cls.model(**kwargs)
-            await cls.async_create(session, instance)
+            await cls.async_create(session, instance, commit)
             created = True
 
         return instance, created
