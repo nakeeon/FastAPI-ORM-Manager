@@ -116,7 +116,7 @@ In `fastapi_manager.pagination` you can find `Paginator` and `Pagination` classe
 It does an offset limit pagination under the hood, and operates with `page` and `per_page` properties.
 Its main method `paginate` returns `Pagination` object which tells the structure of the pagination.
 
-It has two properties: `per_page = 25` and `order_by = 'id` that can be customized.
+It has two properties: `per_page = 25` and `order_by = 'id'` that can be customized.
 
 You can customize it by inherit the `Paginator` and override this param in your own class:
 
