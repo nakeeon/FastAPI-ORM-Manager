@@ -17,7 +17,7 @@ class Manager(Generic[T], metaclass=ManagerMeta):
     paginator_class = Paginator
 
     class Params(BaseModel):
-        """ A pydantic model to use in searching """
+        """ A pydantic model to use in search """
         ...
 
     @classmethod
@@ -78,7 +78,7 @@ class Manager(Generic[T], metaclass=ManagerMeta):
         return instance
 
     @classmethod
-    def search(cls, session: Session, params: [Params, dict], page: int = 1) -> Pagination:
+    def search(cls, session: Session, params: Union[Params, dict], page: int = 1) -> Pagination:
         if isinstance(params, dict):
             params = cls.Params(**params)
 
