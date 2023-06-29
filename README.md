@@ -99,6 +99,8 @@ You can pass either a `dict` or manager's `Params` object.
 ```python
 UserManager.search(session, **{'age': 10, 'gender': 'male'})  # okay
 UserManager.search(session, UserManager.Params(age=10, gender='male'))  # okay
+
+UserManager.search(session, **{'age': 10, 'name': 'Bob'})  # validation error
 ```
 
 ## Pagination
