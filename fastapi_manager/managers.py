@@ -1,4 +1,4 @@
-from typing import Generic, Type, TypeVar
+from typing import Generic, Type, TypeVar, Union
 
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -17,8 +17,8 @@ class Manager(Generic[T], metaclass=ManagerMeta):
     paginator_class = Paginator
 
     class Params(BaseModel):
-        """ A reserved pydantic model to use in filter_by expression """
-        pass
+        """ A pydantic model to use in searching """
+        ...
 
     @classmethod
     def create(cls, session: Session, instance: T):
@@ -78,13 +78,19 @@ class Manager(Generic[T], metaclass=ManagerMeta):
         return instance
 
     @classmethod
-    def search(cls, session: Session, params: Params, page: int = 1) -> Pagination:
+    def search(cls, session: Session, params: [Params, dict], page: int = 1) -> Pagination:
+        if isinstance(params, dict):
+            params = cls.Params(**params)
+
         statement = select(cls.model).filter_by(**params.dict(exclude_none=True))
 
         return cls.paginator_class(cls.model, session, statement, page).paginate()
 
     @classmethod
-    async def async_search(cls, session: AsyncSession, params: Params, page: int = 1) -> Pagination:
+    async def async_search(cls, session: AsyncSession, params: Union[Params, dict], page: int = 1) -> Pagination:
+        if isinstance(params, dict):
+            params = cls.Params(**params)
+
         statement = select(cls.model).filter_by(**params.dict(exclude_none=True))
 
         pagination = await cls.paginator_class(cls.model, session, statement, page).async_paginate()
