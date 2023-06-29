@@ -118,7 +118,7 @@ Its main method `paginate` returns `Pagination` object which tells the structure
 
 It has two properties: `per_page = 25` and `order_by = 'id'` that can be customized.
 
-You can customize it by inherit the `Paginator` and override this param in your own class:
+You can customize it by inherit the `Paginator` and override these params in your own class:
 
 ```python
 from fastapi_manager import Manager, Paginator
