@@ -99,12 +99,18 @@ class Manager(Generic[T], metaclass=ManagerMeta):
 
     @classmethod
     def update(cls, session: Session, instance: T, **kwargs):
+        if isinstance(instance, BaseModel):
+            instance = cls.model(**instance.dict())
+
         for key, value in kwargs.items():
             setattr(instance, key, value)
         session.commit()
 
     @classmethod
     async def async_update(cls, session: AsyncSession, instance: T, **kwargs):
+        if isinstance(instance, BaseModel):
+            instance = cls.model(**instance.dict())
+
         for key, value in kwargs.items():
             setattr(instance, key, value)
 
