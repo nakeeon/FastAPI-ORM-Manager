@@ -1,4 +1,4 @@
-from typing import Generic, Type, TypeVar, Union
+from typing import Generic, Tuple, Type, TypeVar, Union
 
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -66,24 +66,28 @@ class Manager(Generic[T], metaclass=ManagerMeta):
             return None
 
     @classmethod
-    def get_or_create(cls, session: Session, commit: bool = True, **kwargs) -> T:
+    def get_or_create(cls, session: Session, commit: bool = True, **kwargs) -> Tuple[T, bool]:
+        created = False
         instance = cls.get(session, **kwargs)
 
         if not instance:
             instance = cls.model(**kwargs)
             cls.create(session, instance, commit)
+            created = True
 
-        return instance
+        return instance, created
 
     @classmethod
-    async def async_get_or_create(cls, session: AsyncSession, **kwargs) -> T:
+    async def async_get_or_create(cls, session: AsyncSession, **kwargs) -> Tuple[T, bool]:
+        created = False
         instance = await cls.async_get(session, **kwargs)
 
         if not instance:
             instance = cls.model(**kwargs)
             await cls.async_create(session, instance)
+            created = True
 
-        return instance
+        return instance, created
 
     @classmethod
     def search(cls, session: Session, params: Union[Params, dict], page: int = 1) -> Pagination:
