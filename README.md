@@ -55,7 +55,7 @@ List of all methods:
 
 It is also has async methods, simple add `async_` to a method name, e.g. `async_create`, `async_delete` etc.
 
-`Manager` can accept either an SQLAlchemy model instance or a pydantic model.
+`Manager` can accept either an SQLAlchemy model instance or a pydantic model instance.
 
 ```python
 from fastapi_manager import Manager
@@ -76,7 +76,7 @@ UserManager.create(session, user)  # ok
 ### Searching
 
 Manager has `search` and `async_search` methods. It accepts search params as a pydantic model called `Params`. Each
-manager has it's own search params and has `Params` model defined inside.
+manager has its own search params model defined inside the class.
 
 ```python
 from fastapi_manager import Manager
@@ -91,8 +91,9 @@ class UserManager(Manager[User]):
         gender: str
 ```
 
-Now `search` and `async_search` will accept only `age` and `gender` params by validating them by using its `Params`
-pydantic model.
+Now `search` and `async_search` of `UserManager` will accept only `age` and `gender` params by validating them using
+the `Params`
+model.
 
 You can pass either a `dict` or manager's `Params` object.
 
