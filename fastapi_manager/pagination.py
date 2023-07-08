@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 class Pagination(BaseModel):
     page: int
-    results: Union[Sequence, List]
+    items: Union[Sequence, List]
     total: int
     has_prev: bool
     has_next: bool
@@ -24,14 +24,14 @@ class Paginator:
         self.statement = statement
         self.page = page
 
-    def get_results(self) -> Sequence[any]:
+    def get_items(self) -> Sequence[any]:
         statement = self.statement.limit(self.per_page).offset((self.page - 1) * self.per_page)
 
         items = self.session.execute(statement)
 
         return items.scalars().all()
 
-    async def async_get_results(self) -> Sequence[any]:
+    async def async_get_items(self) -> Sequence[any]:
         statement = self.statement.limit(self.per_page).offset((self.page - 1) * self.per_page).order_by(self.order_by)
 
         items = await self.session.execute(statement)
@@ -59,19 +59,19 @@ class Paginator:
 
         return Pagination(
             page=self.page,
-            results=self.get_results(),
+            items=self.get_items(),
             total=self.get_total(),
             has_prev=self.has_prev(),
             has_next=self.has_next(total),
         )
 
     async def async_paginate(self) -> Pagination:
-        results = await self.async_get_results()
+        items = await self.async_get_items()
         total = await self.async_get_total()
 
         return Pagination(
             page=self.page,
-            results=results,
+            items=items,
             total=total,
             has_prev=self.has_prev(),
             has_next=self.has_next(total),
