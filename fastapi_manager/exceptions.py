@@ -1,0 +1,2 @@
+class ModeNotDefinedException(Exception):
+    pass

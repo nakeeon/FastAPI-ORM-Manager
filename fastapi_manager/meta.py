@@ -1,4 +1,7 @@
+import typing
+
 from .decorators import catch_sqlalchemy_error
+from .exceptions import ModeNotDefinedException
 
 
 class ManagerMeta(type):
@@ -11,6 +14,10 @@ class ManagerMeta(type):
         orig_bases = attrs.get('__orig_bases__')
         if orig_bases:
             for base in orig_bases:
+                # skip if it is an original Manager class
+                if base.__origin__ is typing.Generic:
+                    return super(ManagerMeta, cls).__new__(cls, name, bases, attrs)
+
                 # Check if the base is a parameterized version of Generic
                 if hasattr(base, "__origin__"):
                     # Retrieve the type arguments
@@ -19,10 +26,11 @@ class ManagerMeta(type):
                         # Attach the 'model' attribute to the class
                         attrs['model'] = type_args[0]
 
+        if not attrs.get('model'):
+            raise ModeNotDefinedException(f"You must pass an SQLAlchemy model as Manager type in {name} class")
+
         for attr_name, attr_value in attrs.items():
             if isinstance(attr_value, classmethod):
                 attrs[attr_name] = classmethod(catch_sqlalchemy_error(attr_value.__func__))
 
         return super(ManagerMeta, cls).__new__(cls, name, bases, attrs)
-
-
