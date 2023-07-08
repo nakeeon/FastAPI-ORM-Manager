@@ -10,17 +10,22 @@ def catch_sqlalchemy_error(method):
     """
 
     @wraps(method)
-    async def wrapper(cls, session, *args, **kwargs):
+    def wrapper(cls, session, *args, **kwargs):
         try:
-            if iscoroutinefunction(method):
-                return await method(cls, session, *args, **kwargs)
-            else:
-                return method(cls, session, *args, **kwargs)
-        except SQLAlchemyError as e:
-            if iscoroutinefunction(method):
-                await session.rollback()
-            else:
-                session.rollback()
-            raise e
+            return method(cls, session, *args, **kwargs)
+        except SQLAlchemyError:
+            session.rollback()
+            raise
+
+    @wraps(method)
+    async def async_wrapper(cls, session, *args, **kwargs):
+        try:
+            return await method(cls, session, *args, **kwargs)
+        except SQLAlchemyError:
+            await session.rollback()
+            raise
+
+    if iscoroutinefunction(method):
+        return async_wrapper
 
     return wrapper
