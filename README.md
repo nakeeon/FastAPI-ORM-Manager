@@ -9,7 +9,6 @@ projects.
 2. [Pagination](#pagination)
     - [Paginator](#paginator)
     - [Pagination model](#pagination-model)
-3. [Using with FastAPI](#using-with-fastapi)
 
 ## Quick start
 
@@ -147,28 +146,4 @@ class Pagination(BaseModel):
     total: int
     has_prev: bool
     has_next: bool
-```
-
-## Using with FastAPI
-
-As `Manager` also uses pydantic models you can easily integrate it with FastAPI.
-
-For example, you can define search params in a manager `Params` model and reuse it as params for your search endpoint.
-
-```python
-from fastapi import FastAPI
-from sqlalchemy_manager import Pagination
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.deps import get_db
-
-app = FastAPI()
-
-
-@app.get("/users")
-async def get_users(
-        params: UserManager.Params = Depends(UserManager.Params),
-        session: AsyncSession = Depends(get_db), page: int = 1
-) -> Pagination:
-    return await UserManager.async_search(session, params, page)
 ```
