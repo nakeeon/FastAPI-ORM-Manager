@@ -1,139 +1,120 @@
 from typing import Generic, Tuple, Type, TypeVar, Union
 
-from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from .meta import ManagerMeta
-from .pagination import Pagination, Paginator
+from .pagination import AsyncPaginator, Pagination, Paginator
 
 T = TypeVar('T')
 
 
-class Manager(Generic[T], metaclass=ManagerMeta):
+class BaseManager(Generic[T], metaclass=ManagerMeta):
     model: Type[T]
-    paginator_class = Paginator
 
-    class Params(BaseModel):
-        """ A pydantic model to use in search """
-        ...
+    def __init__(self, session: Union[Session, AsyncSession]):
+        self.session = session
 
-    @classmethod
-    def create(cls, session: Session, instance: T, commit: bool = True) -> T:
-        if isinstance(instance, BaseModel):
-            instance = cls.model(**instance.dict())
 
-        session.add(instance)
+class AsyncManager(BaseManager, Generic[T]):
+    paginator_class = AsyncPaginator
+
+    async def create(self, instance: T, commit: bool = True) -> T:
+        self.session.add(instance)
 
         if commit:
-            session.commit()
+            await self.session.commit()
 
         return instance
 
-    @classmethod
-    async def async_create(cls, session: AsyncSession, instance: T, commit: bool = True) -> T:
-        if isinstance(instance, BaseModel):
-            instance = cls.model(**instance.dict())
-
-        session.add(instance)
-
-        if commit:
-            await session.commit()
-
-        return instance
-
-    @classmethod
-    def get(cls, session: Session, **kwargs) -> Union[T, None]:
-        item = session.query(cls.model).filter_by(**kwargs)
+    async def get(self, **kwargs) -> Union[T, None]:
+        statement = select(self.model).filter_by(**kwargs)
+        item = await self.session.execute(statement)
 
         try:
             return item.scalar()
         except NoResultFound:
             return None
 
-    @classmethod
-    async def async_get(cls, session: AsyncSession, **kwargs) -> Union[T, None]:
-        statement = select(cls.model).filter_by(**kwargs)
-        item = await session.execute(statement)
-
-        try:
-            return item.scalar()
-        except NoResultFound:
-            return None
-
-    @classmethod
-    def get_or_create(cls, session: Session, **kwargs) -> Tuple[T, bool]:
+    async def get_or_create(self, **kwargs) -> Tuple[T, bool]:
         commit = kwargs.get('commit', True)
         created = False
-        instance = cls.get(session, **kwargs)
+        instance = await self.get(**kwargs)
 
         if not instance:
-            instance = cls.model(**kwargs)
-            cls.create(session, instance, commit)
+            instance = self.model(**kwargs)
+            await self.create(instance, commit)
             created = True
 
         return instance, created
 
-    @classmethod
-    async def async_get_or_create(cls, session: AsyncSession, **kwargs) -> Tuple[T, bool]:
-        commit = kwargs.get('commit', True)
-        created = False
-        instance = await cls.async_get(session, **kwargs)
+    async def search(self, params: dict, page: int = 1) -> Pagination:
+        statement = select(self.model).filter_by(**params)
 
-        if not instance:
-            instance = cls.model(**kwargs)
-            await cls.async_create(session, instance, commit)
-            created = True
-
-        return instance, created
-
-    @classmethod
-    def search(cls, session: Session, params: Union[Params, dict], page: int = 1) -> Pagination:
-        if isinstance(params, dict):
-            params = cls.Params(**params)
-
-        statement = select(cls.model).filter_by(**params.dict(exclude_none=True))
-
-        return cls.paginator_class(cls.model, session, statement, page).paginate()
-
-    @classmethod
-    async def async_search(cls, session: AsyncSession, params: Union[Params, dict], page: int = 1) -> Pagination:
-        if isinstance(params, dict):
-            params = cls.Params(**params)
-
-        statement = select(cls.model).filter_by(**params.dict(exclude_none=True))
-
-        pagination = await cls.paginator_class(cls.model, session, statement, page).async_paginate()
+        pagination = await self.paginator_class(self.model, self.session, statement, page).paginate()
 
         return pagination
 
     @classmethod
-    def update(cls, session: Session, instance: T, **kwargs):
-        if isinstance(instance, BaseModel):
-            instance = cls.model(**instance.dict())
-
-        for key, value in kwargs.items():
-            setattr(instance, key, value)
-        session.commit()
-
-    @classmethod
-    async def async_update(cls, session: AsyncSession, instance: T, **kwargs):
-        if isinstance(instance, BaseModel):
-            instance = cls.model(**instance.dict())
-
+    async def update(cls, session: AsyncSession, instance: T, **kwargs):
         for key, value in kwargs.items():
             setattr(instance, key, value)
 
         await session.commit()
 
     @classmethod
-    def delete(cls, session: Session, instance: T):
-        session.delete(instance)
-        session.commit()
-
-    @classmethod
-    async def async_delete(cls, session: AsyncSession, instance: T):
+    async def delete(cls, session: AsyncSession, instance: T):
         await session.delete(instance)
         await session.commit()
+
+
+class Manager(BaseManager, Generic[T]):
+    paginator_class = Paginator
+
+    def create(self, instance: Union[T, dict], commit: bool = True) -> T:
+        if isinstance(instance, dict):
+            instance = self.model(**instance)
+
+        self.session.add(instance)
+
+        if commit:
+            self.session.commit()
+
+        return instance
+
+    def get(self, **kwargs) -> Union[T, None]:
+        item = self.session.query(self.model).filter_by(**kwargs)
+
+        try:
+            return item.scalar()
+        except NoResultFound:
+            return None
+
+    def get_or_create(self, **kwargs) -> Tuple[T, bool]:
+        commit = kwargs.get('commit', True)
+        created = False
+        instance = self.get(**kwargs)
+
+        if not instance:
+            instance = self.model(**kwargs)
+            self.create(instance, commit)
+            created = True
+
+        return instance, created
+
+    def search(self, params: dict, page: int = 1) -> Pagination:
+        statement = select(self.model).filter_by(**params)
+
+        return self.paginator_class(self.model, self.session, statement, page).paginate()
+
+    def update(self, instance: T, **kwargs):
+        for key, value in kwargs.items():
+            setattr(instance, key, value)
+
+        self.session.commit()
+
+    def delete(self, instance: T):
+        self.session.delete(instance)
+        self.session.commit()

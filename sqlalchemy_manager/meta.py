@@ -1,3 +1,4 @@
+import inspect
 import typing
 
 from .decorators import catch_sqlalchemy_error
@@ -15,8 +16,11 @@ class ManagerMeta(type):
         if orig_bases:
             for base in orig_bases:
                 # skip if it is an original Manager class
-                if base.__origin__ is typing.Generic:
-                    return super(ManagerMeta, cls).__new__(cls, name, bases, attrs)
+                try:
+                    if base.__origin__ is typing.Generic:
+                        return super(ManagerMeta, cls).__new__(cls, name, bases, attrs)
+                except AttributeError:
+                    pass
 
                 # Check if the base is a parameterized version of Generic
                 if hasattr(base, "__origin__"):
@@ -32,5 +36,7 @@ class ManagerMeta(type):
         for attr_name, attr_value in attrs.items():
             if isinstance(attr_value, classmethod):
                 attrs[attr_name] = classmethod(catch_sqlalchemy_error(attr_value.__func__))
+            elif inspect.ismethod(attr_value):
+                attrs[attr_name] = catch_sqlalchemy_error(attr_value.__func__)
 
         return super(ManagerMeta, cls).__new__(cls, name, bases, attrs)

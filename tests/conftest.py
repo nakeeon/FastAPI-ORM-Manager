@@ -1,12 +1,14 @@
-from typing import Union
-
-from pydantic import BaseModel
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from sqlalchemy_manager import Manager
 from tests import Base, User
+
+try:
+    from pydantic import BaseModel
+except ImportError:
+    BaseModel = object
 
 
 @pytest.fixture(scope='function')
@@ -27,11 +29,9 @@ def test_db():
     Base.metadata.drop_all(engine)
 
 
-@pytest.fixture(scope="module")
-def user_manager():
+@pytest.fixture(scope="function")
+def user_manager(test_db):
     class UserManager(Manager[User]):
-        class Params(BaseModel):
-            name: Union[str, None]
-            lastname: Union[str, None]
+        pass
 
-    return UserManager
+    return UserManager(test_db)

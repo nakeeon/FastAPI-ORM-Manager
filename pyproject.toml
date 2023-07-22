@@ -19,9 +19,6 @@ classifiers = [
 dependencies = [
     "sqlalchemy >= 1.4",
 ]
-extra-dependencies = [
-    "pydantic >= 1.10.9",
-]
 
 [project.urls]
 "Homepage" = "https://github.com/nakeeon/SQLAlchemy-Manager"

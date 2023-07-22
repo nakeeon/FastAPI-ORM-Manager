@@ -1,4 +1,3 @@
-from pydantic import BaseModel
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import declarative_base
 
@@ -12,11 +11,3 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String)
     lastname = Column(String)
-
-
-class UserScheme(BaseModel):
-    id: int
-    name: str
-
-    class Config:
-        orm_mode = True
