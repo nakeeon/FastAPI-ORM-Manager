@@ -3,12 +3,12 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "fastapi-orm-manager"
+name = "sqlalchemy_manager"
 version = "0.0.15"
 authors = [
     { name = "Nazar Kaliuzhnyi", email = "kaluzghnyy@gmail.com" },
 ]
-description = "A base manager class to handle CRUD on SQLAlchemy models. Suitable to use in FastAPI projects."
+description = "A base manager class to handle CRUD on SQLAlchemy models."
 readme = "README.md"
 requires-python = ">=3.7"
 classifiers = [
@@ -18,9 +18,10 @@ classifiers = [
 ]
 dependencies = [
     "sqlalchemy >= 1.4",
+]
+extra-dependencies = [
     "pydantic >= 1.10.9",
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/nakeeon/FastAPI-ORM-Manager"
-"Bug Tracker" = "https://github.com/nakeeon/FastAPI-ORM-Manager/issues"
+"Homepage" = "https://github.com/nakeeon/SQLAlchemy-Manager"
