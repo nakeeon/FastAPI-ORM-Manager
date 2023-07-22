@@ -46,9 +46,7 @@ class Manager(Generic[T], metaclass=ManagerMeta):
 
     @classmethod
     def get(cls, session: Session, **kwargs) -> Union[T, None]:
-        statement = select(cls.model).filter_by(**kwargs)
-
-        item = session.execute(statement)
+        item = session.query(cls.model).filter_by(**kwargs)
 
         try:
             return item.scalar()

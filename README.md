@@ -17,7 +17,7 @@ Assume you have an SQLAlchemy model `User` and you want to perform CRUD on this 
 for the model like this:
 
 ```python
-from fastapi_manager import Manager
+from sqlalchemy_manager import Manager
 
 from .models import User
 
@@ -58,7 +58,7 @@ It is also has async methods, simple add `async_` to a method name, e.g. `async_
 `Manager` can accept either an SQLAlchemy model instance or a pydantic model instance.
 
 ```python
-from fastapi_manager import Manager
+from sqlalchemy_manager import Manager
 from pydantic import BaseModel
 
 from app.db import session
@@ -79,7 +79,7 @@ Manager has `search` and `async_search` methods. It accepts search params as a p
 manager has its own search params model defined inside the class.
 
 ```python
-from fastapi_manager import Manager
+from sqlalchemy_manager import Manager
 from pydantic import BaseModel
 
 from .models import User
@@ -124,7 +124,7 @@ It has two properties: `per_page = 25` and `order_by = 'id'` that can be customi
 You can customize it by inherit the `Paginator` and override these params in your own class:
 
 ```python
-from fastapi_manager import Manager, Paginator
+from sqlalchemy_manager import Manager, Paginator
 
 
 class CustomPaginator(Paginator):
@@ -157,7 +157,7 @@ For example, you can define search params in a manager `Params` model and reuse 
 
 ```python
 from fastapi import FastAPI
-from fastapi_manager import Pagination
+from sqlalchemy_manager import Pagination
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.deps import get_db
