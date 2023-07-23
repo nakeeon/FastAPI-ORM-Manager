@@ -57,17 +57,15 @@ class AsyncManager(BaseManager, Generic[T]):
 
         return pagination
 
-    @classmethod
-    async def update(cls, session: AsyncSession, instance: T, **kwargs):
+    async def update(self, instance: T, **kwargs):
         for key, value in kwargs.items():
             setattr(instance, key, value)
 
-        await session.commit()
+        await self.session.commit()
 
-    @classmethod
-    async def delete(cls, session: AsyncSession, instance: T):
-        await session.delete(instance)
-        await session.commit()
+    async def delete(self, instance: T):
+        await self.session.delete(instance)
+        await self.session.commit()
 
 
 class Manager(BaseManager, Generic[T]):

@@ -4,11 +4,13 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-sqlalchemy = ">=1.4.0"
+sqlalchemy = ">=1.4.18"
 
 [dev-packages]
 pytest = "*"
 pytest-cov = "*"
+pytest-asyncio = "*"
+aiosqlite = "*"
 
 [requires]
 python_version = "3.10"
