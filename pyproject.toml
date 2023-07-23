@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "sqlalchemy_manager"
+name = "sqlalchemy_orm_manager"
 version = "0.0.1"
 authors = [
     { name = "Nazar Kaliuzhnyi", email = "kaluzghnyy@gmail.com" },
