@@ -1,4 +1,4 @@
-from typing import Generic, Tuple, Type, TypeVar, Union
+from typing import Any, Generic, Tuple, Type, TypeVar, Union
 
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
@@ -50,8 +50,15 @@ class AsyncManager(BaseManager, Generic[T]):
 
         return instance, created
 
-    async def search(self, params: dict, page: int = 1) -> Pagination:
-        statement = select(self.model).filter_by(**params)
+    async def search(self, *criteria: Any, **params: dict) -> Pagination:
+        page = params.pop('page', 1)
+        statement = select(self.model)
+
+        if params:
+            statement = statement.filter_by(**params)
+
+        if criteria:
+            statement = statement.where(*criteria)
 
         pagination = await self.paginator_class(self.model, self.session, statement, page).paginate()
 
@@ -102,8 +109,15 @@ class Manager(BaseManager, Generic[T]):
 
         return instance, created
 
-    def search(self, params: dict, page: int = 1) -> Pagination:
-        statement = select(self.model).filter_by(**params)
+    def search(self, *criteria: Any, **params: dict) -> Pagination:
+        page = params.pop('page', 1)
+        statement = select(self.model)
+
+        if params:
+            statement = statement.filter_by(**params)
+
+        if criteria:
+            statement = statement.where(*criteria)
 
         return self.paginator_class(self.model, self.session, statement, page).paginate()
 

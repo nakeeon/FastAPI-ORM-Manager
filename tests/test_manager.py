@@ -1,4 +1,5 @@
 import pytest
+from sqlalchemy import and_
 
 from tests import User
 
@@ -67,11 +68,19 @@ def test_search(user_manager):
     user_manager.create(User(name='Bob', lastname='Johnson'))
     user_manager.create(User(name='Bob', lastname='Carlson'))
 
-    result = user_manager.search({'name': 'Bob'})
+    result = user_manager.search(name='Bob')
 
     assert result.total == 2
 
-    result = user_manager.search({'lastname': 'Carlson'})
+    result = user_manager.search(lastname='Carlson')
+
+    assert result.total == 1
+
+    result = user_manager.search(name='Bob', lastname='Johnson')
+
+    assert result.total == 1
+
+    result = user_manager.search(and_(User.name == 'Bob', User.lastname == 'Johnson'))
 
     assert result.total == 1
 
@@ -155,11 +164,19 @@ async def test_async_search(get_async_user_manager):
     await user_manager.create(User(name='Bob', lastname='Johnson'))
     await user_manager.create(User(name='Bob', lastname='Carlson'))
 
-    result = await user_manager.search({'name': 'Bob'})
+    result = await user_manager.search(name='Bob')
 
     assert result.total == 2
 
-    result = await user_manager.search({'lastname': 'Carlson'})
+    result = await user_manager.search(lastname='Carlson')
+
+    assert result.total == 1
+
+    result = await user_manager.search(name='Bob', lastname='Johnson')
+
+    assert result.total == 1
+
+    result = await user_manager.search(and_(User.name == 'Bob', User.lastname == 'Johnson'))
 
     assert result.total == 1
 
