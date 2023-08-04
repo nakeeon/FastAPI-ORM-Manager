@@ -1,9 +1,8 @@
-A fully typed generic manager class to easily create CRUD operations for SQLAlchemy models. Designed to use in FastAPI
-projects.
+A fully typed generic manager class to easily create CRUD operations for SQLAlchemy models.
 
-# Table of content
+# Table of contents
 
-1. [Quick start](#quick-start)
+1. [Quick Start](#quick-start)
     - [Manager](#manager)
     - [Searching](#searching)
 2. [Pagination](#pagination)
@@ -12,8 +11,8 @@ projects.
 
 ## Quick start
 
-Assume you have an SQLAlchemy model `User` and you want to perform CRUD on this model. You can simply create a manager
-for the model like this:
+Assume you have an SQLAlchemy model `User`, and want to perform CRUD on this model. You can simply create a manager
+for the model:
 
 ```python
 from sqlalchemy_manager import Manager
@@ -25,23 +24,38 @@ class UserManager(Manager[User]):
     pass
 ```
 
-`Manager` is a generic class, you need to pass an SQLAlchemy model as it's type (`Manager[User]`) to configure the
-manager to operate the model.
-
-By passing an SQLAlchemy model as manager's type you will also get type hints and autocompletion in your IDE.
-
-That's it. You can now use the manager to do CRUD operations. You need to pass an SQlAlchemy session to a method as
-first argument. It can be `Session` or `AsyncSession`.
+The package also has `AsyncManager`. You can import and use it in the same way.
 
 ```python
-UserManager.create(session, User(firstname="Bob"))
-UserManager.get(session, id=1)
-UserManager.delete(session, id=1)
+from sqlalchemy_manager import AsynManager
+
+from .models import User
+
+
+class UserManager(AsynManager[User]):
+    pass
+```
+
+`Manager` is a generic class. You need to pass an SQLAlchemy model as its type (`Manager[User]`) to configure the
+manager to operate on the model.
+
+Passing an SQLAlchemy model as the manager's type, you will also get type hints and autocompletion in your IDE.
+
+That's it. You can now use the manager to do CRUD operations. You must initialize a manager by passing a session
+instance. It should be `Session` for the `Manager` and `AsyncSession` for the `AsyncManage`.
+
+```python
+UserManager(session).create(User(firstname="Bob"))
+UserManager(session).get(id=1)
+UserManager(session).delete(id=1)
+
+# Using AsyncManager
+await UserManager(async_session).get(id=1)
 ```
 
 ### Manager
 
-`Manager` class contains general CRUD methods alongside some extra methods such as `get_or_create` and `search`.
+The `Manager` class contains general CRUD and extra methods such as `get_or_create` or `search`.
 
 List of all methods:
 
@@ -52,75 +66,35 @@ List of all methods:
     - search
     - update
 
-It is also has async methods, simple add `async_` to a method name, e.g. `async_create`, `async_delete` etc.
-
-`Manager` can accept either an SQLAlchemy model instance or a pydantic model instance.
-
-```python
-from sqlalchemy_manager import Manager
-from pydantic import BaseModel
-
-from app.db import session
-from app.managers import UserManager
-
-
-class User(BaseModel):
-    firstname: str
-
-
-user = User(firstname="Bob")
-UserManager.create(session, user)  # ok
-```
-
 ### Searching
 
-Manager has `search` and `async_search` methods. It accepts search params as a pydantic model called `Params`. Each
-manager has its own search params model defined inside the class.
+The `Manager` has a `search` method. It accepts a list of SQLAlchemy expressions and simple `kwargs`.
 
 ```python
-from sqlalchemy_manager import Manager
-from pydantic import BaseModel
+UserManager(session).search(age=10, gender="male")
 
-from .models import User
-
-
-class UserManager(Manager[User]):
-    class Params(BaseModel):
-        age: int
-        gender: str
-```
-
-Now `search` and `async_search` of `UserManager` will accept only `age` and `gender` params by validating them using
-the `Params`
-model.
-
-You can pass either a `dict` or manager's `Params` object.
-
-```python
-UserManager.search(session, **{'age': 10, 'gender': 'male'})  # okay
-UserManager.search(session, UserManager.Params(age=10, gender='male'))  # okay
-
-UserManager.search(session, **{'age': 10, 'name': 'Bob'})  # validation error
+UserManager(session).search(User.age >= 10)
 ```
 
 ## Pagination
 
-You usually need a pagination when do search. `Manager` comes with simple builtin pagination for `search`
-and `async_search` methods.
+You usually need pagination when searching. `Manager` comes with simple built-in pagination for `search` method.
 
-These methods accept `page` argument to return a limited set of items belonging to the page.
+The method accepts the `page` argument to return a limited set of items belonging to the page.
 
-In `fastapi_manager.pagination` you can find `Paginator` and `Pagination` classes.
+In `sqlalchemy_manager.pagination`, you can find `Paginator` and `Pagination` classes.
 
 ### Paginator
 
-`Paginator` is responsible for doing the pagination and is used by manager's `search` and `async_search` methods.
-It does an offset limit pagination under the hood, and operates with `page` and `per_page` properties.
-Its main method `paginate` returns `Pagination` object which tells the structure of the pagination.
+`Paginator` is responsible for doing the pagination and is used by the manager's `search` method.
+It does an offset limit pagination under the hood and operates with `page` and `per_page` properties.
+Its primary method, `paginate,` returns the `Pagination` instance.
 
-It has two properties: `per_page = 25` and `order_by = 'id'` that can be customized.
+`AsyncManager` uses `AsyncPaginator`.
 
-You can customize it by inherit the `Paginator` and override these params in your own class:
+`Paginator` has two properties: `per_page = 25` and `order_by = 'id'` that can be customized.
+
+You can customize it by inheriting the `Paginator` and overriding these params in your class:
 
 ```python
 from sqlalchemy_manager import Manager, Paginator
@@ -137,10 +111,11 @@ class UserManager(Manager[User]):
 
 ### Pagination model
 
-`Pagination` is a pydantic model that describes the structure of the pagination object to be returned.
+`Pagination` is a dataclass that describes the structure of the pagination object to return.
 
 ```python
-class Pagination(BaseModel):
+@dataclass
+class Pagination:
     page: int
     results: Union[Sequence, List]
     total: int
